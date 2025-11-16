@@ -81,6 +81,17 @@
   "column_break_heye",
   "bank_ac_no",
   "iban",
+  "benefit_and_incentives",
+  "benefit_and_incentive_section",
+  "benefits",
+  "has_nhif",
+  "has_fixed_contribution",
+  "contribution_in_percent",
+  "contribution_fixed_amount",
+  "incentives",
+  "has_nssf",
+  "transport_allowance",
+  "responsibility_allowance",
   "personal_details",
   "marital_status",
   "family_background",
@@ -816,6 +827,69 @@
    "fieldtype": "Data",
    "label": "IBAN",
    "options": "IBAN"
+  },
+  {
+   "fieldname": "benefit_and_incentives",
+   "fieldtype": "Tab Break",
+   "label": "Benefits & Incentives"
+  },
+  {
+   "fieldname": "benefits",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "has_nhif",
+   "fieldtype": "Check",
+   "label": "Has NHIF?"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.has_nhif==1",
+   "fieldname": "has_fixed_contribution",
+   "fieldtype": "Check",
+   "label": "Has Fixed Contribution"
+  },
+  {
+   "default": "3",
+   "depends_on": "eval:doc.has_fixed_contribution==0 && doc.has_nhif==1",
+   "fieldname": "contribution_in_percent",
+   "fieldtype": "Int",
+   "label": "Contributions in Percent (% of Basic)"
+  },
+  {
+   "default": "20000",
+   "depends_on": "eval:doc.has_fixed_contribution==1",
+   "fieldname": "contribution_fixed_amount",
+   "fieldtype": "Currency",
+   "label": "Contribution Fixed Amount",
+   "precision": "2"
+  },
+  {
+   "fieldname": "incentives",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "has_nssf",
+   "fieldtype": "Check",
+   "label": "Has NSSF?"
+  },
+  {
+   "fieldname": "benefit_and_incentive_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "transport_allowance",
+   "fieldtype": "Currency",
+   "label": "Transport Allowance",
+   "precision": "2"
+  },
+  {
+   "fieldname": "responsibility_allowance",
+   "fieldtype": "Currency",
+   "label": "Responsibility Allowance",
+   "precision": "2"
   }
  ],
  "icon": "fa fa-user",
@@ -823,7 +897,7 @@
  "image_field": "image",
  "is_tree": 1,
  "links": [],
- "modified": "2025-08-29 11:52:12.819878",
+ "modified": "2025-11-15 23:12:00.598332",
  "modified_by": "Administrator",
  "module": "Setup",
  "name": "Employee",
