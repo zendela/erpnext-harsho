@@ -72,6 +72,7 @@
   "attendance_device_id",
   "column_break_44",
   "holiday_list",
+  "stay_in_current_shift",
   "salary_information",
   "ctc",
   "salary_currency",
@@ -890,6 +891,12 @@
    "fieldtype": "Currency",
    "label": "Responsibility Allowance",
    "precision": "2"
+  },
+  {
+   "default": "0",
+   "fieldname": "stay_in_current_shift",
+   "fieldtype": "Check",
+   "label": "Stay In Current Shift"
   }
  ],
  "icon": "fa fa-user",
@@ -897,7 +904,7 @@
  "image_field": "image",
  "is_tree": 1,
  "links": [],
- "modified": "2025-11-15 23:12:00.598332",
+ "modified": "2025-11-16 09:30:05.724261",
  "modified_by": "Administrator",
  "module": "Setup",
  "name": "Employee",
