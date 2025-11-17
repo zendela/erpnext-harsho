@@ -79,9 +79,10 @@
   "salary_mode",
   "bank_details_section",
   "bank_name",
+  "branch_name",
   "column_break_heye",
   "bank_ac_no",
-  "iban",
+  "bank_code",
   "benefit_and_incentives",
   "benefit_and_incentive_section",
   "benefits",
@@ -418,7 +419,8 @@
    "label": "Salary Mode",
    "oldfieldname": "salary_mode",
    "oldfieldtype": "Select",
-   "options": "\nBank\nCash\nCheque"
+   "options": "\nBank\nCash\nCheque",
+   "reqd": 1
   },
   {
    "depends_on": "eval:doc.salary_mode == 'Bank'",
@@ -823,13 +825,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval:doc.salary_mode == 'Bank'",
-   "fieldname": "iban",
-   "fieldtype": "Data",
-   "label": "IBAN",
-   "options": "IBAN"
-  },
-  {
    "fieldname": "benefit_and_incentives",
    "fieldtype": "Tab Break",
    "label": "Benefits & Incentives"
@@ -897,6 +892,17 @@
    "fieldname": "stay_in_current_shift",
    "fieldtype": "Check",
    "label": "Stay In Current Shift"
+  },
+  {
+   "fieldname": "branch_name",
+   "fieldtype": "Data",
+   "label": "Branch Name"
+  },
+  {
+   "depends_on": "eval:doc.salary_mode == 'Bank'",
+   "fieldname": "bank_code",
+   "fieldtype": "Data",
+   "label": "Bank Code"
   }
  ],
  "icon": "fa fa-user",
@@ -904,7 +910,7 @@
  "image_field": "image",
  "is_tree": 1,
  "links": [],
- "modified": "2025-11-16 09:30:05.724261",
+ "modified": "2025-11-17 08:55:35.290618",
  "modified_by": "Administrator",
  "module": "Setup",
  "name": "Employee",
