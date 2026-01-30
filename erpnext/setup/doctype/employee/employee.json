@@ -735,8 +735,9 @@
   {
    "fieldname": "ctc",
    "fieldtype": "Currency",
-   "label": "Cost to Company (CTC)",
-   "options": "salary_currency"
+   "label": "Basic",
+   "options": "salary_currency",
+   "reqd": 1
   },
   {
    "fieldname": "basic_details_tab",
@@ -910,7 +911,7 @@
  "image_field": "image",
  "is_tree": 1,
  "links": [],
- "modified": "2025-11-17 08:55:35.290618",
+ "modified": "2026-01-30 08:13:57.487937",
  "modified_by": "Administrator",
  "module": "Setup",
  "name": "Employee",
