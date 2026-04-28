@@ -78,6 +78,7 @@
   "salary_mode",
   "bank_details_section",
   "bank_name",
+  "bank_code",
   "column_break_heye",
   "bank_ac_no",
   "iban",
@@ -415,6 +416,13 @@
    "label": "Bank Name",
    "oldfieldname": "bank_name",
    "oldfieldtype": "Link"
+  },
+  {
+   "depends_on": "eval:doc.salary_mode == 'Bank'",
+   "fieldname": "bank_code",
+   "fieldtype": "Data",
+   "label": "Bank Code",
+   "description": "Numeric bank identifier used in payment files (e.g. 017010)"
   },
   {
    "depends_on": "eval:doc.salary_mode == 'Bank'",
