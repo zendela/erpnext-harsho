@@ -22,6 +22,8 @@ from erpnext.accounts.party import get_dashboard_info, validate_party_accounts
 from erpnext.controllers.website_list_for_contact import add_role_for_portal_user
 from erpnext.utilities.transaction_base import TransactionBase
 
+CREDIT_LIMIT_MANAGER_ROLE = "Credit Limit Manager"
+
 
 class Customer(TransactionBase):
 	# begin: auto-generated types
@@ -139,6 +141,7 @@ class Customer(TransactionBase):
 		self.flags.is_new_doc = self.is_new()
 		self.flags.old_lead = self.lead_name
 		validate_party_accounts(self)
+		self.validate_credit_limit_permissions()
 		self.validate_credit_limit_on_change()
 		self.set_loyalty_program()
 		self.check_customer_group_change()
@@ -161,10 +164,12 @@ class Customer(TransactionBase):
 	def get_customer_group_details(self):
 		doc = frappe.get_doc("Customer Group", self.customer_group)
 		self.accounts = []
-		self.credit_limits = []
 		self.payment_terms = self.default_price_list = ""
 
-		tables = [["accounts", "account"], ["credit_limits", "credit_limit"]]
+		tables = [["accounts", "account"]]
+		if can_manage_credit_limit():
+			self.credit_limits = []
+			tables.append(["credit_limits", "credit_limit"])
 		fields = ["payment_terms", "default_price_list"]
 
 		for row in tables:
@@ -182,6 +187,38 @@ class Customer(TransactionBase):
 			self.update({field: doc.get(field)})
 
 		self.save()
+
+	def validate_credit_limit_permissions(self):
+		current_limits = sorted(
+			(
+				row.company or "",
+				flt(row.credit_limit),
+				cint(row.bypass_credit_limit_check),
+			)
+			for row in self.credit_limits
+		)
+		previous_limits = []
+		if not self.is_new():
+			previous_limits = sorted(
+				(
+					row.company or "",
+					flt(row.credit_limit),
+					cint(row.bypass_credit_limit_check),
+				)
+				for row in frappe.get_all(
+					"Customer Credit Limit",
+					filters={"parent": self.name, "parenttype": "Customer"},
+					fields=["company", "credit_limit", "bypass_credit_limit_check"],
+				)
+			)
+
+		if current_limits != previous_limits and not can_manage_credit_limit():
+			frappe.throw(
+				_("Only users with the {0} role can change Customer Credit Limits.").format(
+					frappe.bold(CREDIT_LIMIT_MANAGER_ROLE)
+				),
+				frappe.PermissionError,
+			)
 
 	def check_customer_group_change(self):
 		frappe.flags.customer_group_changed = False
@@ -520,6 +557,11 @@ def get_nested_links(link_doctype, link_name, ignore_permissions=False):
 		links.append(d.value)
 
 	return links
+
+
+def can_manage_credit_limit(user=None):
+	user = user or frappe.session.user
+	return user == "Administrator" or CREDIT_LIMIT_MANAGER_ROLE in frappe.get_roles(user)
 
 
 def check_credit_limit(customer, company, ignore_outstanding_sales_order=False, extra_amount=0):

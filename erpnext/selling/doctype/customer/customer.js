@@ -168,6 +168,14 @@ frappe.ui.form.on("Customer", {
 			);
 
 			frm.add_custom_button(
+				__("Purchase Statement"),
+				function () {
+					frm.trigger("show_purchase_statement_dialog");
+				},
+				__("View")
+			);
+
+			frm.add_custom_button(
 				__("Get Customer Group Details"),
 				function () {
 					frm.trigger("get_customer_group_details");
@@ -197,6 +205,65 @@ frappe.ui.form.on("Customer", {
 		var grid = cur_frm.get_field("sales_team").grid;
 		grid.set_column_disp("allocated_amount", false);
 		grid.set_column_disp("incentives", false);
+	},
+	show_purchase_statement_dialog: function (frm) {
+		const dialog = new frappe.ui.Dialog({
+			title: __("Customer Purchase Statement"),
+			fields: [
+				{
+					fieldname: "company",
+					label: __("Company"),
+					fieldtype: "Link",
+					options: "Company",
+					default: frappe.defaults.get_user_default("Company"),
+					reqd: 1,
+				},
+				{
+					fieldname: "from_date",
+					label: __("From Date"),
+					fieldtype: "Date",
+					default: frappe.datetime.add_months(frappe.datetime.get_today(), -12),
+					reqd: 1,
+				},
+				{
+					fieldname: "to_date",
+					label: __("To Date"),
+					fieldtype: "Date",
+					default: frappe.datetime.get_today(),
+					reqd: 1,
+				},
+			],
+			primary_action_label: __("Download PDF"),
+			primary_action(values) {
+				const query = new URLSearchParams({
+					customer: frm.doc.name,
+					company: values.company,
+					from_date: values.from_date,
+					to_date: values.to_date,
+				});
+				window.open(
+					frappe.urllib.get_full_url(
+						"/api/method/erpnext.selling.report.customer_purchase_statement.customer_purchase_statement.download_statement?" +
+							query.toString()
+					),
+					"_blank"
+				);
+				dialog.hide();
+			},
+			secondary_action_label: __("View Report"),
+			secondary_action() {
+				const values = dialog.get_values();
+				if (!values) return;
+				frappe.set_route("query-report", "Customer Purchase Statement", {
+					customer: frm.doc.name,
+					company: values.company,
+					from_date: values.from_date,
+					to_date: values.to_date,
+				});
+				dialog.hide();
+			},
+		});
+		dialog.show();
 	},
 	validate: function (frm) {
 		if (frm.doc.lead_name) frappe.model.clear_doc("Lead", frm.doc.lead_name);

@@ -1,0 +1,76 @@
+{% extends "templates/web.html" %}
+
+{% block title %}{{ _("My Statement") }}{% endblock %}
+
+{% block page_content %}
+<div class="container py-5">
+	<div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+		<div>
+			<h2>{{ _("My Statement") }}</h2>
+			<p class="text-muted mb-0">{{ _("Purchased items and current available balance") }}</p>
+		</div>
+		{% if statement %}
+		<a class="btn btn-primary mt-2" href="{{ download_url }}">{{ _("Download PDF") }}</a>
+		{% endif %}
+	</div>
+
+	<form method="get" class="card card-body mb-4">
+		<div class="row">
+			{% if customers|length > 1 %}
+			<div class="col-md-3 mb-3">
+				<label for="customer">{{ _("Customer") }}</label>
+				<select id="customer" name="customer" class="form-control">
+				{% for customer_name in customers %}
+					<option value="{{ customer_name }}" {% if customer_name == selected_customer %}selected{% endif %}>{{ customer_name }}</option>
+				{% endfor %}
+				</select>
+			</div>
+			{% endif %}
+			<div class="col-md-3 mb-3">
+				<label for="company">{{ _("Company") }}</label>
+				<select id="company" name="company" class="form-control" required>
+				{% for company_name in companies %}
+					<option value="{{ company_name }}" {% if company_name == selected_company %}selected{% endif %}>{{ company_name }}</option>
+				{% endfor %}
+				</select>
+			</div>
+			<div class="col-md-2 mb-3">
+				<label for="from_date">{{ _("From Date") }}</label>
+				<input id="from_date" name="from_date" type="date" class="form-control" value="{{ from_date }}" required>
+			</div>
+			<div class="col-md-2 mb-3">
+				<label for="to_date">{{ _("To Date") }}</label>
+				<input id="to_date" name="to_date" type="date" class="form-control" value="{{ to_date }}" required>
+			</div>
+			<div class="col-md-2 mb-3 d-flex align-items-end">
+				<button class="btn btn-secondary w-100" type="submit">{{ _("Refresh") }}</button>
+			</div>
+		</div>
+	</form>
+
+	{% if statement %}
+		{% set filters = statement.filters %}
+		{% set customer = statement.customer %}
+		{% set company = statement.company %}
+		{% set data = statement.data %}
+		{% set balances = statement.balances %}
+		{% include "erpnext/selling/report/customer_purchase_statement/customer_purchase_statement.html" %}
+	{% else %}
+	<div class="alert alert-info">{{ _("No company activity is available for this customer yet.") }}</div>
+	{% endif %}
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+	frappe.ready(() => {
+		const customer = document.querySelector("#customer");
+		if (!customer) return;
+		customer.addEventListener("change", () => {
+			const company = document.querySelector("#company");
+			if (company) company.disabled = true;
+			customer.form.submit();
+		});
+	});
+</script>
+{% endblock %}
