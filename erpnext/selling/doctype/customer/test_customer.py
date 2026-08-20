@@ -5,12 +5,15 @@
 import json
 
 import frappe
+from frappe.core.doctype.user_permission.test_user_permission import create_user
 from frappe.tests import IntegrationTestCase
 from frappe.utils import flt
 
 from erpnext.accounts.party import get_due_date
 from erpnext.exceptions import PartyDisabled, PartyFrozen
 from erpnext.selling.doctype.customer.customer import (
+	CREDIT_LIMIT_MANAGER_ROLE,
+	can_manage_credit_limit,
 	get_credit_limit,
 	get_customer_outstanding,
 	parse_full_name,
@@ -58,6 +61,37 @@ class TestCustomer(IntegrationTestCase):
 		self.assertEqual(c_doc.credit_limits[0].credit_limit, 350000)
 		c_doc.delete()
 		doc.delete()
+
+	def test_only_credit_limit_manager_can_change_customer_credit_limit(self):
+		if not frappe.db.exists("Role", CREDIT_LIMIT_MANAGER_ROLE):
+			frappe.get_doc(
+				{"doctype": "Role", "role_name": CREDIT_LIMIT_MANAGER_ROLE, "desk_access": 1}
+			).insert(ignore_permissions=True)
+
+		customer = frappe.get_doc("Customer", "_Test Customer")
+		customer.credit_limits = []
+		customer.append("credit_limits", {"company": "_Test Company", "credit_limit": 10000000})
+		customer.save()
+
+		self.assertTrue(can_manage_credit_limit("Administrator"))
+
+		user = create_user("credit-limit-test@example.com", "Sales User")
+		try:
+			with self.set_user(user.name):
+				self.assertFalse(can_manage_credit_limit())
+				customer = frappe.get_doc("Customer", "_Test Customer")
+				customer.credit_limits[0].credit_limit = 20000000
+				self.assertRaises(frappe.PermissionError, customer.save, ignore_permissions=True)
+
+			user.add_roles(CREDIT_LIMIT_MANAGER_ROLE)
+			with self.set_user(user.name):
+				self.assertTrue(can_manage_credit_limit())
+				customer = frappe.get_doc("Customer", "_Test Customer")
+				customer.credit_limits[0].credit_limit = 20000000
+				customer.save(ignore_permissions=True)
+				self.assertEqual(customer.credit_limits[0].credit_limit, 20000000)
+		finally:
+			user.remove_roles(CREDIT_LIMIT_MANAGER_ROLE)
 
 	def test_party_details(self):
 		from erpnext.accounts.party import get_party_details

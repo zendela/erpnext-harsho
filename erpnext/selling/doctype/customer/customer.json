@@ -457,7 +457,8 @@
    "fieldname": "credit_limits",
    "fieldtype": "Table",
    "label": "Credit Limit",
-   "options": "Customer Credit Limit"
+   "options": "Customer Credit Limit",
+   "permlevel": 1
   },
   {
    "default": "0",
@@ -663,7 +664,12 @@
   {
    "permlevel": 1,
    "read": 1,
-   "role": "Sales Master Manager",
+   "role": "Sales Master Manager"
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Credit Limit Manager",
    "write": 1
   },
   {

@@ -256,6 +256,12 @@ standard_portal_menu_items = [
 		"role": "Customer",
 	},
 	{
+		"title": "My Statement",
+		"route": "/customer-statement",
+		"reference_doctype": "Sales Invoice",
+		"role": "Customer",
+	},
+	{
 		"title": "Shipments",
 		"route": "/shipments",
 		"reference_doctype": "Delivery Note",

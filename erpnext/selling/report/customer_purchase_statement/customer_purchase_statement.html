@@ -1,0 +1,73 @@
+<div class="customer-purchase-statement">
+	<h2 class="text-center">{{ _("Customer Purchase Statement") }}</h2>
+	<h4 class="text-center">{{ customer.customer_name }}</h4>
+	<p class="text-center text-muted">
+		{{ company.company_name }} ·
+		{{ frappe.format(filters.from_date, "Date") }} {{ _("to") }} {{ frappe.format(filters.to_date, "Date") }}
+	</p>
+
+	<table class="table table-bordered balance-summary">
+		<thead>
+			<tr>
+				<th>{{ _("Credit Limit") }}</th>
+				<th>{{ _("Amount Due") }}</th>
+				<th>{{ _("Advance Balance") }}</th>
+				<th>{{ _("Committed Amount") }}</th>
+				<th>{{ _("Available Balance") }}</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>{{ frappe.utils.fmt_money(balances.credit_limit, currency=balances.currency) }}</td>
+				<td>{{ frappe.utils.fmt_money(balances.amount_due, currency=balances.currency) }}</td>
+				<td>{{ frappe.utils.fmt_money(balances.advance_balance, currency=balances.currency) }}</td>
+				<td>{{ frappe.utils.fmt_money(balances.committed_amount, currency=balances.currency) }}</td>
+				<td><strong>{{ frappe.utils.fmt_money(balances.available_balance, currency=balances.currency) }}</strong></td>
+			</tr>
+		</tbody>
+	</table>
+
+	<table class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th>{{ _("Item") }}</th>
+				<th class="text-right">{{ _("Purchased Qty") }}</th>
+				<th class="text-right">{{ _("Returned Qty") }}</th>
+				<th class="text-right">{{ _("Net Qty") }}</th>
+				<th>{{ _("UOM") }}</th>
+				<th class="text-right">{{ _("Net Purchase Value") }}</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for row in data %}
+			<tr>
+				<td>{{ row.item_name }}{% if row.item_code %}<br><span class="text-muted">{{ row.item_code }}</span>{% endif %}</td>
+				<td class="text-right">{{ frappe.format(row.purchased_qty, {"fieldtype": "Float"}) }}</td>
+				<td class="text-right">{{ frappe.format(row.returned_qty, {"fieldtype": "Float"}) }}</td>
+				<td class="text-right">{{ frappe.format(row.net_qty, {"fieldtype": "Float"}) }}</td>
+				<td>{{ row.stock_uom }}</td>
+				<td class="text-right">{{ frappe.utils.fmt_money(row.net_amount, currency=row.currency) }}</td>
+			</tr>
+		{% else %}
+			<tr><td colspan="6" class="text-center text-muted">{{ _("No purchases found for this period.") }}</td></tr>
+		{% endfor %}
+		</tbody>
+		{% if data %}
+		<tfoot>
+			<tr>
+				<th colspan="5" class="text-right">{{ _("Net Purchase Total") }}</th>
+				<th class="text-right">{{ frappe.utils.fmt_money(data|sum(attribute="net_amount"), currency=balances.currency) }}</th>
+			</tr>
+		</tfoot>
+		{% endif %}
+	</table>
+	<p class="text-right text-muted">{{ _("Generated on {0}").format(frappe.utils.now()) }}</p>
+</div>
+
+<style>
+	.customer-purchase-statement { font-size: 10px; }
+	.customer-purchase-statement .balance-summary th,
+	.customer-purchase-statement .balance-summary td { text-align: right; }
+	.customer-purchase-statement .balance-summary th:first-child,
+	.customer-purchase-statement .balance-summary td:first-child { text-align: left; }
+</style>
