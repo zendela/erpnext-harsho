@@ -232,6 +232,27 @@ frappe.ui.form.on("Customer", {
 					default: frappe.datetime.get_today(),
 					reqd: 1,
 				},
+				{
+					fieldname: "letter_head",
+					label: __("Letter Head"),
+					fieldtype: "Link",
+					options: "Letter Head",
+					get_query: () => ({ filters: { disabled: 0 } }),
+				},
+				{
+					fieldname: "print_format",
+					label: __("Print Format"),
+					fieldtype: "Link",
+					options: "Print Format",
+					get_query: () => ({
+						filters: {
+							disabled: 0,
+							print_format_for: "Report",
+							report: "Customer Purchase Statement",
+							print_format_type: "Jinja",
+						},
+					}),
+				},
 			],
 			primary_action_label: __("Download PDF"),
 			primary_action(values) {
@@ -241,6 +262,8 @@ frappe.ui.form.on("Customer", {
 					from_date: values.from_date,
 					to_date: values.to_date,
 				});
+				if (values.letter_head) query.set("letter_head", values.letter_head);
+				if (values.print_format) query.set("print_format", values.print_format);
 				window.open(
 					frappe.urllib.get_full_url(
 						"/api/method/erpnext.selling.report.customer_purchase_statement.customer_purchase_statement.download_statement?" +
@@ -259,6 +282,8 @@ frappe.ui.form.on("Customer", {
 					company: values.company,
 					from_date: values.from_date,
 					to_date: values.to_date,
+					letter_head: values.letter_head,
+					print_format: values.print_format,
 				});
 				dialog.hide();
 			},

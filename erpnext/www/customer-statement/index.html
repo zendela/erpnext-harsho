@@ -34,15 +34,33 @@
 				{% endfor %}
 				</select>
 			</div>
-			<div class="col-md-2 mb-3">
+			<div class="col-md-3 mb-3">
 				<label for="from_date">{{ _("From Date") }}</label>
 				<input id="from_date" name="from_date" type="date" class="form-control" value="{{ from_date }}" required>
 			</div>
-			<div class="col-md-2 mb-3">
+			<div class="col-md-3 mb-3">
 				<label for="to_date">{{ _("To Date") }}</label>
 				<input id="to_date" name="to_date" type="date" class="form-control" value="{{ to_date }}" required>
 			</div>
-			<div class="col-md-2 mb-3 d-flex align-items-end">
+			<div class="col-md-3 mb-3">
+				<label for="letter_head">{{ _("Letter Head") }}</label>
+				<select id="letter_head" name="letter_head" class="form-control">
+					<option value="">{{ _("Company Default") }}</option>
+				{% for letter_head_name in letter_heads %}
+					<option value="{{ letter_head_name }}" {% if letter_head_name == selected_letter_head %}selected{% endif %}>{{ letter_head_name }}</option>
+				{% endfor %}
+				</select>
+			</div>
+			<div class="col-md-3 mb-3">
+				<label for="print_format">{{ _("PDF Print Format") }}</label>
+				<select id="print_format" name="print_format" class="form-control">
+					<option value="">{{ _("Standard") }}</option>
+				{% for print_format_name in print_formats %}
+					<option value="{{ print_format_name }}" {% if print_format_name == selected_print_format %}selected{% endif %}>{{ print_format_name }}</option>
+				{% endfor %}
+				</select>
+			</div>
+			<div class="col-md-3 mb-3 d-flex align-items-end">
 				<button class="btn btn-secondary w-100" type="submit">{{ _("Refresh") }}</button>
 			</div>
 		</div>
@@ -54,6 +72,7 @@
 		{% set company = statement.company %}
 		{% set data = statement.data %}
 		{% set balances = statement.balances %}
+		{% set letter_head = statement.letter_head %}
 		{% include "erpnext/selling/report/customer_purchase_statement/customer_purchase_statement.html" %}
 	{% else %}
 	<div class="alert alert-info">{{ _("No company activity is available for this customer yet.") }}</div>

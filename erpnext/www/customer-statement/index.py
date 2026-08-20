@@ -7,6 +7,8 @@ from frappe.utils import add_months, getdate, today
 from erpnext.controllers.website_list_for_contact import get_parents_for_user
 from erpnext.selling.report.customer_purchase_statement.customer_purchase_statement import (
 	get_available_companies,
+	get_available_letter_heads,
+	get_available_print_formats,
 	get_statement_context,
 )
 
@@ -29,6 +31,8 @@ def get_context(context):
 	selected_company = frappe.form_dict.get("company") or (companies[0] if companies else None)
 	from_date = getdate(frappe.form_dict.get("from_date") or add_months(today(), -12))
 	to_date = getdate(frappe.form_dict.get("to_date") or today())
+	selected_letter_head = frappe.form_dict.get("letter_head")
+	selected_print_format = frappe.form_dict.get("print_format")
 
 	context.no_cache = 1
 	context.title = _("My Statement")
@@ -38,6 +42,10 @@ def get_context(context):
 	context.selected_company = selected_company
 	context.from_date = from_date
 	context.to_date = to_date
+	context.letter_heads = get_available_letter_heads()
+	context.print_formats = get_available_print_formats()
+	context.selected_letter_head = selected_letter_head
+	context.selected_print_format = selected_print_format
 	context.statement = None
 
 	if selected_company:
@@ -47,14 +55,19 @@ def get_context(context):
 				"company": selected_company,
 				"from_date": from_date,
 				"to_date": to_date,
+				"letter_head": selected_letter_head,
+				"print_format": selected_print_format,
 			}
 		)
+		context.selected_letter_head = context.statement.filters.get("letter_head")
 		download_query = urlencode(
 			{
 				"customer": selected_customer,
 				"company": selected_company,
 				"from_date": from_date,
 				"to_date": to_date,
+				"letter_head": selected_letter_head or "",
+				"print_format": selected_print_format or "",
 			}
 		)
 		context.download_url = (

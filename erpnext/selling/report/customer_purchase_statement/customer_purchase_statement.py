@@ -8,7 +8,7 @@ from frappe.query_builder.functions import Sum
 from frappe.utils import cint, flt, getdate
 from frappe.utils.pdf import get_pdf
 from frappe.utils.user import is_website_user
-from frappe.www.printview import get_print_style
+from frappe.www.printview import get_letter_head, get_print_style
 
 from erpnext.selling.doctype.customer.customer import get_credit_limit, get_customer_outstanding
 
@@ -40,7 +40,37 @@ def validate_filters(filters=None):
 	if not frappe.db.exists("Customer", filters.customer):
 		frappe.throw(_("Customer {0} does not exist").format(frappe.bold(filters.customer)))
 
+	if filters.get("letter_head"):
+		validate_letter_head(filters.letter_head)
+	if filters.get("print_format"):
+		validate_print_format(filters.print_format)
+
 	return filters
+
+
+def validate_letter_head(letter_head):
+	if not frappe.db.exists("Letter Head", letter_head):
+		frappe.throw(_("Letter Head {0} does not exist").format(frappe.bold(letter_head)))
+	if frappe.get_cached_value("Letter Head", letter_head, "disabled"):
+		frappe.throw(_("Letter Head {0} is disabled").format(frappe.bold(letter_head)))
+
+
+def validate_print_format(print_format):
+	print_format_doc = frappe.get_cached_doc("Print Format", print_format)
+	if print_format_doc.disabled:
+		frappe.throw(_("Print Format {0} is disabled").format(frappe.bold(print_format)))
+	if print_format_doc.print_format_for != "Report" or print_format_doc.report != "Customer Purchase Statement":
+		frappe.throw(
+			_("Print Format {0} is not configured for the Customer Purchase Statement report").format(
+				frappe.bold(print_format)
+			)
+		)
+	if print_format_doc.print_format_type != "Jinja":
+		frappe.throw(_("Only Jinja Print Formats are supported for this statement"))
+	if not print_format_doc.html:
+		frappe.throw(_("Print Format {0} does not contain an HTML template").format(frappe.bold(print_format)))
+
+	return print_format_doc
 
 
 def get_columns():
@@ -230,18 +260,53 @@ def get_available_companies(customer):
 	return sorted(company for company in companies if company)
 
 
+def get_available_letter_heads():
+	return frappe.get_all("Letter Head", filters={"disabled": 0}, pluck="name", order_by="name")
+
+
+def get_available_print_formats():
+	return frappe.get_all(
+		"Print Format",
+		filters={
+			"disabled": 0,
+			"print_format_for": "Report",
+			"report": "Customer Purchase Statement",
+			"print_format_type": "Jinja",
+		},
+		pluck="name",
+		order_by="name",
+	)
+
+
 def get_statement_context(filters):
 	filters = validate_filters(filters)
 	validate_statement_access(filters.customer)
 	validate_company_access(filters.customer, filters.company)
 
+	company = frappe.get_cached_doc("Company", filters.company)
+	letter_head_name = filters.get("letter_head") or company.default_letter_head
+	letter_head = None
+	if letter_head_name:
+		validate_letter_head(letter_head_name)
+		filters.letter_head = letter_head_name
+		letter_head = get_letter_head(
+			frappe._dict({"company": filters.company, "letter_head": letter_head_name}),
+			no_letterhead=0,
+			letterhead=letter_head_name,
+		)
+
+	columns = get_columns()
 	return {
 		"filters": filters,
 		"customer": frappe.get_cached_doc("Customer", filters.customer),
-		"company": frappe.get_cached_doc("Company", filters.company),
-		"columns": get_columns(),
+		"company": company,
+		"report": frappe._dict(
+			{"report_name": "Customer Purchase Statement", "columns": columns}
+		),
+		"columns": columns,
 		"data": get_item_summary(filters),
 		"balances": get_balance_summary(filters.customer, filters.company),
+		"letter_head": letter_head,
 	}
 
 
@@ -250,24 +315,40 @@ def validate_company_access(customer, company):
 		frappe.throw(_("You are not permitted to view a statement for this company"), frappe.PermissionError)
 
 
+def render_statement(context):
+	print_format_doc = None
+	if context["filters"].get("print_format"):
+		print_format_doc = validate_print_format(context["filters"].print_format)
+		body = frappe.render_template(print_format_doc.html, context)
+	else:
+		body = frappe.render_template(
+			"erpnext/selling/report/customer_purchase_statement/customer_purchase_statement.html",
+			context,
+		)
+
+	return frappe.render_template(
+		"frappe/www/printview.html",
+		{
+			"body": body,
+			"css": get_print_style(None, print_format_doc),
+			"title": _("Customer Purchase Statement"),
+		},
+	)
+
+
 @frappe.whitelist()
-def download_statement(customer, company, from_date, to_date):
+def download_statement(customer, company, from_date, to_date, letter_head=None, print_format=None):
 	context = get_statement_context(
 		{
 			"customer": customer,
 			"company": company,
 			"from_date": from_date,
 			"to_date": to_date,
+			"letter_head": letter_head,
+			"print_format": print_format,
 		}
 	)
-	body = frappe.render_template(
-		"erpnext/selling/report/customer_purchase_statement/customer_purchase_statement.html",
-		context,
-	)
-	html = frappe.render_template(
-		"frappe/www/printview.html",
-		{"body": body, "css": get_print_style(), "title": _("Customer Purchase Statement")},
-	)
+	html = render_statement(context)
 
 	frappe.local.response.filename = f"{frappe.scrub(customer)}-purchase-statement.pdf"
 	frappe.local.response.filecontent = get_pdf(html)

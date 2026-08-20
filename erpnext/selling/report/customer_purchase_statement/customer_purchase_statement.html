@@ -1,3 +1,13 @@
+{% if letter_head and letter_head.content %}
+<div id="header-html" class="hidden-pdf">
+	<div class="letter-head">{{ letter_head.content }}</div>
+</div>
+{% endif %}
+{% if letter_head and letter_head.footer %}
+<div id="footer-html" class="visible-pdf">
+	<div class="letter-head-footer">{{ letter_head.footer }}</div>
+</div>
+{% endif %}
 <div class="customer-purchase-statement">
 	<h2 class="text-center">{{ _("Customer Purchase Statement") }}</h2>
 	<h4 class="text-center">{{ customer.customer_name }}</h4>
